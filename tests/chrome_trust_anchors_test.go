@@ -27,9 +27,10 @@ const trustAnchorsExtension = 0xca34
 // trust anchor IDs draft, so it reads the extension instead of skipping it.
 const generate204Endpoint = "https://www.google.com/generate_204"
 
-// chromeProfile is the profile these tests use. Every Chrome profile hands
-// the extension the same bytes, so one covers them all. This one is the newest,
-// so it is the wiring most likely to be wrong.
+// chromeProfile is the profile these tests use. Every Chrome profile before
+// 154 hands the extension the same bytes, so one covers them all. This one is the newest
+// that shuffles the IDs, which is what these tests check. The sorted Chrome 157
+// profiles have their own test, TestChrome157TrustAnchors.
 const chromeProfileName = "Chrome_152_PSK"
 
 var chromeProfile = profiles.Chrome_152_PSK
@@ -530,5 +531,26 @@ func TestChrome150TrustAnchors(t *testing.T) {
 	for _, profile := range []profiles.ClientProfile{profiles.Chrome_150, profiles.Chrome_150_PSK} {
 		payload := trustAnchorsFromSpec(t, profile)
 		checkTrustAnchorIDs(t, profile.GetClientHelloStr(), capture, payload)
+	}
+}
+
+// chrome157Capture is the payload stable Chrome 157.0.8103.39 on Windows sent,
+// from the "Unknown extension 51764" data field of a tls.peet.ws fingerprint.
+// Chrome 154 and later sort the IDs, so every connection and every process
+// sends these exact bytes.
+const chrome157Capture = "00b80582df1302010582df1302060582df13020d0582df13020e0582df13020f0582df1302120582df1302130582df13021408839a648c9b2d010708839a648c9b2d010808839a648c9b2d010908839a648c9b2d010a08839a648c9b2d010b08839a648c9b2d010c08839a648c9b2d010d08839a648c9b2d011208839a648c9b2d011304d679090104d679090404d679090504d679090604d679090704d679090804d679090a04d679090b04d679090c04d679090d04d679090f"
+
+// TestChrome157TrustAnchors checks that the Chrome_157 profiles send the
+// sorted list, byte for byte what real Chrome 157 sends.
+func TestChrome157TrustAnchors(t *testing.T) {
+	capture := chromeCapture(t)
+
+	for _, profile := range []profiles.ClientProfile{profiles.Chrome_157, profiles.Chrome_157_PSK} {
+		payload := trustAnchorsFromSpec(t, profile)
+		checkTrustAnchorIDs(t, profile.GetClientHelloStr(), capture, payload)
+
+		if got := hex.EncodeToString(payload); got != chrome157Capture {
+			t.Errorf("%s sends %s, real Chrome 157 sends %s", profile.GetClientHelloStr(), got, chrome157Capture)
+		}
 	}
 }

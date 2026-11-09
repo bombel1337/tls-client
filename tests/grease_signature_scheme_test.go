@@ -13,6 +13,8 @@ import (
 var greaseSignatureSchemeProfiles = map[string]profiles.ClientProfile{
 	"Chrome_152":     profiles.Chrome_152,
 	"Chrome_152_PSK": profiles.Chrome_152_PSK,
+	"Chrome_157":     profiles.Chrome_157,
+	"Chrome_157_PSK": profiles.Chrome_157_PSK,
 }
 
 // TestGreaseSignatureSchemeIsRandom checks the first entry of
